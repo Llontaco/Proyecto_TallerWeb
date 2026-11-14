@@ -1,0 +1,10 @@
+# Ambiente de desarrollo (máquina local, MySQL local, datos de demostración).
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    com.sigsu: DEBUG

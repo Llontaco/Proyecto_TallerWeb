@@ -1,0 +1,19 @@
+# Ambiente de producción (contenedor Docker en la nube).
+# Todos los valores sensibles llegan por variables de entorno del proveedor cloud.
+app:
+  cookie:
+    secure: ${COOKIE_SECURE:true}
+  seed:
+    enabled: ${SEED_ENABLED:false}
+
+server:
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+logging:
+  level:
+    root: INFO
+    com.sigsu: INFO

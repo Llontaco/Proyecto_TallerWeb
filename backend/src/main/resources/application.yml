@@ -1,0 +1,95 @@
+# Configuración de SIGSU. Ningún secreto se escribe aquí: todo sale de variables de entorno
+# o del archivo backend/.env (ignorado por git). Ver backend/.env.example.
+# Ambientes: dev (por defecto, máquina local), test (pruebas automáticas), prod (nube / Docker).
+spring:
+  application:
+    name: sigsu-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/sigsu?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: ${DB_DDL_AUTO:update}
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 16MB
+  jackson:
+    time-zone: UTC
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-stacktrace: never
+  forward-headers-strategy: framework
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-hours: ${JWT_EXPIRATION_HOURS:8}
+  cookie:
+    name: SIGSU_TOKEN
+    secure: ${COOKIE_SECURE:false}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+  uploads:
+    dir: ${UPLOADS_DIR:./uploads}
+  correo:
+    dominio: ${CORREO_DOMINIO:uni.edu.pe}
+  seed:
+    enabled: ${SEED_ENABLED:true}
+    demo-password: ${SEED_DEMO_PASSWORD:}
+  seguridad:
+    login:
+      max-intentos: ${LOGIN_MAX_INTENTOS:5}
+      ventana-minutos: ${LOGIN_VENTANA_MINUTOS:15}
+  notificaciones:
+    # El correo solo se envía si además se configura SPRING_MAIL_HOST (y usuario/clave SMTP).
+    correo-habilitado: ${NOTIF_CORREO_HABILITADO:false}
+    remitente: ${NOTIF_REMITENTE:no-responder@sigsu.local}
+    url-frontend: ${APP_URL_FRONTEND:http://localhost:5173}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+  api-docs:
+    path: /v3/api-docs
+
+# Solo se exponen health e info (Fase IV agregará métricas).
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  health:
+    # El correo es opcional: un SMTP caído no debe marcar el servicio como no saludable
+    mail:
+      enabled: false
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: SIGSU
+    version: '@project.version@'
+
+logging:
+  level:
+    com.sigsu: INFO
