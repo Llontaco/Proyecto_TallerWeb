@@ -1,0 +1,49 @@
+# Blueprint de Render (https://render.com): crea los dos servicios web desde el repositorio.
+# La base MySQL es externa (Render no ofrece MySQL gestionado): ver docs/despliegue.md.
+# Los valores marcados con "sync: false" se ingresan en el panel de Render (nunca en el repositorio).
+services:
+  - type: web
+    name: sigsu-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /actuator/health
+    autoDeploy: false          # lo dispara el pipeline de CD cuando CI pasa en main
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SEED_ENABLED
+        value: "true"
+      - key: SEED_DEMO_PASSWORD
+        sync: false
+      - key: APP_URL_FRONTEND
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=70 -XX:+ExitOnOutOfMemoryError"
+
+  - type: web
+    name: sigsu-frontend
+    runtime: docker
+    rootDir: frontend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      - key: BACKEND_URL
+        sync: false            # p. ej. https://sigsu-backend.onrender.com

@@ -1,0 +1,23 @@
+# Actualizaciones automáticas de dependencias (gestión de vulnerabilidades conocidas, OWASP A06).
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /backend
+    schedule: { interval: weekly }
+    target-branch: develop
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule: { interval: weekly }
+    target-branch: develop
+  - package-ecosystem: npm
+    directory: /tests/e2e
+    schedule: { interval: monthly }
+    target-branch: develop
+  - package-ecosystem: docker
+    directories: [/backend, /frontend]
+    schedule: { interval: weekly }
+    target-branch: develop
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }
+    target-branch: develop
