@@ -1,0 +1,61 @@
+# nginx de SIGSU: sirve la SPA de React y actúa como API Gateway hacia Spring Boot.
+#  - Un solo origen para el navegador (la cookie SameSite=Strict funciona sin CORS)
+#  - Límite de peticiones por IP (login más estricto contra fuerza bruta)
+#  - Cabeceras de seguridad y caché de archivos estáticos
+
+limit_req_zone $binary_remote_addr zone=login:10m rate=20r/m;
+limit_req_zone $binary_remote_addr zone=api:10m rate=30r/s;
+
+server {
+    listen 80;
+    server_name _;
+    server_tokens off;
+    client_max_body_size 16m;
+    root /usr/share/nginx/html;
+
+    # Salud del gateway (la usa Docker y el proveedor cloud)
+    location = /health {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok";
+    }
+
+    # Login: máximo 20 intentos por minuto por IP
+    location = /api/auth/login {
+        limit_req zone=login burst=10 nodelay;
+        limit_req_status 429;
+        include /etc/nginx/snippets/proxy.conf;
+        include /etc/nginx/snippets/seguridad.conf;
+        proxy_pass ${BACKEND_URL};
+    }
+
+    # Resto de la API REST
+    location /api/ {
+        limit_req zone=api burst=60 nodelay;
+        limit_req_status 429;
+        include /etc/nginx/snippets/proxy.conf;
+        include /etc/nginx/snippets/seguridad.conf;
+        proxy_pass ${BACKEND_URL};
+    }
+
+    # Documentación OpenAPI / Swagger UI (sin CSP estricta, Swagger usa estilos en línea)
+    location ~ ^/(swagger-ui|swagger-ui\.html|v3/api-docs) {
+        include /etc/nginx/snippets/proxy.conf;
+        add_header X-Content-Type-Options "nosniff" always;
+        proxy_pass ${BACKEND_URL};
+    }
+
+    # Archivos con hash en el nombre: caché de 1 año
+    location /assets/ {
+        include /etc/nginx/snippets/seguridad.conf;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    # SPA: cualquier otra ruta devuelve index.html (React Router decide)
+    location / {
+        include /etc/nginx/snippets/seguridad.conf;
+        add_header Cache-Control "no-cache" always;
+        try_files $uri $uri/ /index.html;
+    }
+}
