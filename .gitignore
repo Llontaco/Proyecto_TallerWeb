@@ -1,0 +1,25 @@
+# Dependencias y compilados
+node_modules/
+target/
+dist/
+build/
+
+# Secretos y configuración local (nunca al repositorio)
+.env
+.env.*
+!.env.example
+
+# Archivos subidos por los usuarios
+backend/uploads/
+
+# Varios
+*.log
+.DS_Store
+.idea/
+.vscode/
+
+# Reportes de pruebas
+coverage/
+playwright-report/
+test-results/
+newman/

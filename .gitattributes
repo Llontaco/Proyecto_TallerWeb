@@ -1,0 +1,6 @@
+# Finales de línea LF en el repositorio (los contenedores y CI corren en Linux)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
+*.jar binary
