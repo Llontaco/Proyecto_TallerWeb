@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # ---------- Etapa 1: compilación con Maven ----------
-FROM maven:3.9.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /app
 # Primero solo el pom: las dependencias quedan en caché mientras no cambie
 COPY pom.xml .
