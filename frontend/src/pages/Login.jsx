@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Campo } from '../components/ui.jsx';
 import { inicioDe } from '../constants.js';
+import escudo from '../assets/escudo-unmsm.png';
 
 const CLAVE_RECORDAR = 'sigsu_recordar_correo';
 const DEMOS = [
@@ -53,6 +54,10 @@ export default function Login() {
   return (
     <section className="auth">
       <div className="auth__marca">
+        <div className="auth__escudo">
+          <img src={escudo} alt="Escudo de la Universidad Nacional Mayor de San Marcos" width="130" height="152" />
+          <span>Universidad Nacional<br />Mayor de San Marcos</span>
+        </div>
         <h1>SIGSU</h1>
         <p>Sistema Integral de Gestión de Servicios Universitarios</p>
         <ul className="auth__beneficios">
