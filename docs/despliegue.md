@@ -55,6 +55,12 @@ El navegador solo habla con el gateway: un único origen, la cookie `SameSite=St
 
 `JWT_SECRET` lo genera Render automáticamente.
 
+> **Ojo con los nombres.** Los subdominios `*.onrender.com` son únicos en todo Render: si `sigsu-backend` ya existe, Render agrega un sufijo (en nuestro despliegue quedó `https://sigsu-backend-m8yc.onrender.com`). Después del primer despliegue, revisar la URL real de cada servicio y corregir `BACKEND_URL`, `APP_URL_FRONTEND` y `CORS_ORIGINS`; si no, el gateway enviaría las peticiones (y las contraseñas) a un servicio ajeno.
+>
+> Al pegar `DB_PASSWORD` cuidar que no quede un salto de línea al final: el backend no arranca (*Unable to determine Dialect without JDBC metadata* = no pudo conectarse a MySQL). Crear el Blueprint solo cuando el servicio de Aiven esté en estado *Running*.
+
+**Despliegue actual:** frontend https://sigsu-frontend.onrender.com · backend https://sigsu-backend-m8yc.onrender.com · MySQL 8.4 en Aiven.
+
 ### 3. Conectar el pipeline de CD
 
 En GitHub → *Settings → Secrets and variables → Actions*:
