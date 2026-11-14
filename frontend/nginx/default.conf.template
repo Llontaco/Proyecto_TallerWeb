@@ -3,6 +3,14 @@
 #  - Límite de peticiones por IP (login más estricto contra fuerza bruta)
 #  - Cabeceras de seguridad y caché de archivos estáticos
 
+# IP real del cliente: en la nube (Render) todas las peticiones llegan a través del proxy
+# del proveedor, que envía la IP original en X-Forwarded-For. Sin esto, el límite de
+# peticiones se aplicaría a la IP del proxy y todos los usuarios compartirían el mismo cupo.
+# En docker compose local no hay X-Forwarded-For y se usa la IP de conexión.
+set_real_ip_from 0.0.0.0/0;
+set_real_ip_from ::/0;
+real_ip_header X-Forwarded-For;
+
 limit_req_zone $binary_remote_addr zone=login:10m rate=20r/m;
 limit_req_zone $binary_remote_addr zone=api:10m rate=30r/s;
 
