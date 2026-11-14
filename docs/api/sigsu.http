@@ -1,0 +1,136 @@
+### Colección de pruebas de la API SIGSU
+### Se ejecuta con la extensión REST Client de VS Code (o IntelliJ HTTP Client).
+### También está la documentación interactiva en http://localhost:8080/swagger-ui.html
+
+@base = http://localhost:8080/api
+@password = Demo1234
+
+### 1. Login de estudiante (guarda el token)
+# @name loginEstudiante
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "correo": "estudiante@uni.edu.pe", "password": "{{password}}" }
+
+###
+@tokenEst = {{loginEstudiante.response.body.token}}
+
+### 2. Login de supervisor
+# @name loginSupervisor
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "correo": "supervisor@uni.edu.pe", "password": "{{password}}" }
+
+###
+@tokenSup = {{loginSupervisor.response.body.token}}
+
+### 3. Login de técnico
+# @name loginTecnico
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "correo": "tecnico@uni.edu.pe", "password": "{{password}}" }
+
+###
+@tokenTec = {{loginTecnico.response.body.token}}
+
+### 4. Catálogos (categorías, prioridades, áreas, estados)
+GET {{base}}/catalogos
+Authorization: Bearer {{tokenEst}}
+
+### 5. Registrar solicitud (201 + Location)
+# @name crear
+POST {{base}}/solicitudes
+Authorization: Bearer {{tokenEst}}
+Content-Type: application/json
+
+{
+  "categoriaId": 1,
+  "prioridadId": 2,
+  "ubicacion": "Facultad de Ingeniería – Aula 305",
+  "descripcion": "La puerta del aula 305 no cierra correctamente desde ayer."
+}
+
+###
+@id = {{crear.response.body.id}}
+
+### 6. Registrar con datos incompletos (400 con errores por campo)
+POST {{base}}/solicitudes
+Authorization: Bearer {{tokenEst}}
+Content-Type: application/json
+
+{ "categoriaId": 1, "prioridadId": 2, "ubicacion": "", "descripcion": "corta" }
+
+### 7. Mis solicitudes con filtros
+GET {{base}}/solicitudes?estado=REGISTRADA&q=puerta
+Authorization: Bearer {{tokenEst}}
+
+### 8. Editar mientras está Registrada (PUT)
+PUT {{base}}/solicitudes/{{id}}
+Authorization: Bearer {{tokenEst}}
+Content-Type: application/json
+
+{
+  "categoriaId": 1,
+  "prioridadId": 3,
+  "ubicacion": "Facultad de Ingeniería – Aula 305 (3er piso)",
+  "descripcion": "La puerta del aula 305 no cierra correctamente desde ayer."
+}
+
+### 9. Salto de estado no permitido (422)
+PATCH {{base}}/solicitudes/{{id}}/estado
+Authorization: Bearer {{tokenSup}}
+Content-Type: application/json
+
+{ "estado": "RESUELTA" }
+
+### 10. Supervisor: pasar a evaluación
+PATCH {{base}}/solicitudes/{{id}}/estado
+Authorization: Bearer {{tokenSup}}
+Content-Type: application/json
+
+{ "estado": "EN_EVALUACION" }
+
+### 11. Supervisor: técnicos disponibles
+GET {{base}}/usuarios?rol=TECNICO
+Authorization: Bearer {{tokenSup}}
+
+### 12. Supervisor: asignar técnico (usar el id del técnico del paso 11)
+PATCH {{base}}/solicitudes/{{id}}/asignacion
+Authorization: Bearer {{tokenSup}}
+Content-Type: application/json
+
+{ "tecnicoId": 3, "prioridadId": 3 }
+
+### 13. Técnico: iniciar atención
+PATCH {{base}}/solicitudes/{{id}}/estado
+Authorization: Bearer {{tokenTec}}
+Content-Type: application/json
+
+{ "estado": "EN_ATENCION" }
+
+### 14. Técnico: resolver con comentario
+PATCH {{base}}/solicitudes/{{id}}/estado
+Authorization: Bearer {{tokenTec}}
+Content-Type: application/json
+
+{ "estado": "RESUELTA", "comentario": "Se cambió la chapa de la puerta." }
+
+### 15. Estudiante: cerrar
+PATCH {{base}}/solicitudes/{{id}}/estado
+Authorization: Bearer {{tokenEst}}
+Content-Type: application/json
+
+{ "estado": "CERRADA" }
+
+### 16. Detalle con historial completo
+GET {{base}}/solicitudes/{{id}}
+Authorization: Bearer {{tokenEst}}
+
+### 17. Dashboard (403 para estudiantes)
+GET {{base}}/dashboard
+Authorization: Bearer {{tokenSup}}
+
+### 18. Sin token (401)
+GET {{base}}/solicitudes
