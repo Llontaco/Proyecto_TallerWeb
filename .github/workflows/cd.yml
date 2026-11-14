@@ -1,0 +1,85 @@
+# Entrega continua: cuando CI termina bien en main (o se publica un tag v*),
+# se construyen las imágenes Docker, se publican en GitHub Container Registry
+# y se dispara el despliegue en la nube (Render) mediante deploy hooks.
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publicar:
+    name: Publicar imágenes en GHCR
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        servicio: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/sigsu-${{ matrix.servicio }}
+          tags: |
+            type=sha,format=short
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.servicio }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.servicio }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.servicio }}
+
+  desplegar:
+    name: Desplegar en producción
+    needs: publicar
+    runs-on: ubuntu-latest
+    environment:
+      name: produccion
+      url: ${{ vars.APP_URL }}
+    steps:
+      - name: Disparar el despliegue en Render
+        env:
+          HOOK_BACKEND: ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
+          HOOK_FRONTEND: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
+        run: |
+          if [ -z "$HOOK_BACKEND" ] || [ -z "$HOOK_FRONTEND" ]; then
+            echo "::warning::Faltan los secretos RENDER_DEPLOY_HOOK_*: se omite el despliegue."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK_BACKEND" > /dev/null
+          curl -fsS -X POST "$HOOK_FRONTEND" > /dev/null
+          echo "Despliegue solicitado."
+      - name: Verificar que la aplicación responde (smoke test)
+        if: vars.APP_URL != ''
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          for _ in $(seq 1 40); do
+            if curl -fsS "$APP_URL/health" > /dev/null && curl -fsS "$APP_URL/v3/api-docs" > /dev/null; then
+              echo "La aplicación responde en $APP_URL"; exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::La aplicación no respondió a tiempo"; exit 1
