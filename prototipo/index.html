@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SIGSU – Sistema Integral de Gestión de Servicios Universitarios (prototipo Fase I)">
+  <title>SIGSU · Servicios Universitarios</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="sin-sesion">
+  <a class="saltar" href="#app">Saltar al contenido</a>
+
+  <header class="cabecera">
+    <a class="cabecera__marca" href="#/">
+      <span class="logo" aria-hidden="true">S</span>
+      <span>SIGSU</span>
+    </a>
+    <nav id="nav" class="nav" aria-label="Navegación principal"></nav>
+    <div id="usuario-actual" class="usuario"></div>
+  </header>
+
+  <main id="app" tabindex="-1"></main>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <footer class="pie">
+    Prototipo Fase I · Taller de Construcción de Software Web · Datos simulados
+  </footer>
+
+  <!-- Orden: API simulada → cliente HTTP → aplicación -->
+  <script src="js/mock-api.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
