@@ -1,0 +1,65 @@
+# SIGSU con Docker Compose: MySQL + API Spring Boot + frontend nginx (gateway).
+# Uso:  cp .env.example .env   (completar)   y luego   docker compose up -d --build
+# Abrir http://localhost:8088  ·  Swagger: http://localhost:8088/swagger-ui.html
+name: sigsu
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: sigsu
+      MYSQL_USER: ${DB_USER:-sigsu_app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Define DB_ROOT_PASSWORD en .env}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    # La base no se publica fuera de la red de Docker. Para verla con Workbench, descomentar:
+    # ports: ["3307:3306"]
+
+  backend:
+    build: ./backend
+    image: ${REGISTRY:-sigsu}/sigsu-backend:${TAG:-local}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://db:3306/sigsu?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      DB_USER: ${DB_USER:-sigsu_app}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      SEED_ENABLED: ${SEED_ENABLED:-true}
+      SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-}
+      CORS_ORIGINS: ${APP_URL:-http://localhost:8088}
+      APP_URL_FRONTEND: ${APP_URL:-http://localhost:8088}
+      NOTIF_CORREO_HABILITADO: ${NOTIF_CORREO_HABILITADO:-false}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+    volumes:
+      - uploads:/app/uploads
+
+  frontend:
+    build: ./frontend
+    image: ${REGISTRY:-sigsu}/sigsu-frontend:${TAG:-local}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_URL: http://backend:8080
+    ports:
+      - "${APP_PORT:-8088}:80"
+
+volumes:
+  db-data:
+  uploads:
