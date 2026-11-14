@@ -9,7 +9,7 @@ COPY src ./src
 RUN mvn -B -q -DskipTests package && cp target/sigsu-backend-*.jar app.jar
 
 # ---------- Etapa 2: imagen de ejecución mínima ----------
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 LABEL org.opencontainers.image.title="sigsu-backend" \
       org.opencontainers.image.description="API REST de SIGSU (Spring Boot)"
 
