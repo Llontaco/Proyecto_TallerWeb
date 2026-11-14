@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { MENU, ROL_TEXTO, iniciales, inicioDe } from '../constants.js';
 import Icono from './Iconos.jsx';
 import Campana from './Campana.jsx';
+import escudo from '../assets/escudo-unmsm.png';
 
 const CLAVE_COLAPSADO = 'sigsu_sidebar_colapsado';
 
@@ -43,7 +44,7 @@ export default function Layout() {
 
       <aside className="sidebar" aria-label="Menú principal">
         <Link className="sidebar__marca" to={inicioDe(usuario.rol)}>
-          <span className="sidebar__logo" aria-hidden="true">S</span>
+          <span className="sidebar__logo" aria-hidden="true"><img src={escudo} alt="" width="36" height="42" /></span>
           <span className="sidebar__texto">
             <strong>SIGSU</strong>
             <small>Gestión de servicios</small>
