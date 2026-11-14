@@ -8,7 +8,7 @@ COPY . .
 RUN npm run build
 
 # ---------- Etapa 2: nginx sirve la SPA y actúa como API Gateway ----------
-FROM nginx:1.27-alpine
+FROM nginx:1.29-alpine
 LABEL org.opencontainers.image.title="sigsu-frontend" \
       org.opencontainers.image.description="Frontend React de SIGSU servido por nginx (gateway hacia la API)"
 
