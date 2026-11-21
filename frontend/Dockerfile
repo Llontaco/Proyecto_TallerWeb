@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # ---------- Etapa 1: build de React con Vite ----------
-FROM node:20-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
